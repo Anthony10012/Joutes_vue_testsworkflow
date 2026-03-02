@@ -1,2 +1,7 @@
 .idea
-/db/.env
+/backend/.env
+
+node_modules/
+
+npm-debug.log*
+

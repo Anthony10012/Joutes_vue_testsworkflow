@@ -17,7 +17,7 @@ jobs:
     steps:
       # Première étape : afficher un message
       - name: Etape 1
-        run: echo "Bonjour classe ICT324 !"
+        run: echo "Bonjour classe ICT324 !!"
 
       # Deuxième étape : afficher un autre message
       - name: Etape 2

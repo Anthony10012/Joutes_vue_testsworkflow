@@ -15,6 +15,7 @@ cd ton-projet
 **2. Installer les dépendances**
 
 npm install
+npm install axios
 
 **3. Configurer l'environnement**
 

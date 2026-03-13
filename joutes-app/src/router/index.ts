@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import PlayerTeamView from '../views/PlayerTeamView.vue'
 import SignInUser from "@/views/SignInUser.vue";
+import LogInUser from "@/views/LogInUser.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,6 +24,11 @@ const router = createRouter({
       name: 'sign in',
       component: SignInUser,
     }
+    {
+      path: '/login',
+      name: 'login',
+      component: LogInUser,
+    },
   ],
 })
 

@@ -1,79 +1,82 @@
 <script setup>
-import { reactive, ref } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import axios from "axios"
 
 // Reactive object to store form input
 const user = reactive({
-  firstname: "",
-  lastname: "",
-  classname: "",
-  email: "",
+  username: "",
+  password: "",
   team: "",
-  sport: "",
-  password: ""
+  sport: ""  // stockera l'idSports sélectionné
 })
 
 // Track registration status and loading state
 const registered = ref(false)
 const loading = ref(false)
 
-// List of available sports
-const sports = ["Football", "Basket", "Tennis", "Natation"]
+// Sports récupérés depuis le backend
+const sports = ref([])
+
+// Récupération des sports depuis le backend
+onMounted(async () => {
+  try {
+    // Appel direct au backend sur le port 3006
+    const res = await axios.get("http://localhost:3006/api/sports")
+    sports.value = res.data  // [{ idSports: 1, Name: "Badminton" }, ...]
+  } catch (e) {
+    console.error("Erreur récupération sports :", e)
+    alert("Impossible de récupérer les sports disponibles")
+  }
+})
+
+// Validation mot de passe strict
+function validatePassword(password) {
+  if (password.length < 12) return "Le mot de passe doit contenir au moins 12 caractères"
+
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])/
+  if (!regex.test(password)) return "Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial"
+
+  const lower = password.toLowerCase()
+  for (let i = 0; i < lower.length - 2; i++) {
+    if (lower.charCodeAt(i) + 1 === lower.charCodeAt(i + 1) &&
+      lower.charCodeAt(i + 1) + 1 === lower.charCodeAt(i + 2)) {
+      return "Le mot de passe ne peut pas contenir de suite de lettres comme abc"
+    }
+  }
+
+  for (let i = 0; i < password.length - 2; i++) {
+    const n1 = password[i].charCodeAt(0)
+    const n2 = password[i+1].charCodeAt(0)
+    const n3 = password[i+2].charCodeAt(0)
+    if (/\d/.test(password[i]) && /\d/.test(password[i+1]) && /\d/.test(password[i+2])) {
+      if (n1 + 1 === n2 && n2 + 1 === n3) return "Le mot de passe ne peut pas contenir de suite de chiffres comme 123"
+    }
+  }
+
+  return null
+}
 
 // Function to handle user registration
 const registerUser = async () => {
-  // Basic validation
-  if (
-    !user.firstname.trim() ||
-    !user.lastname.trim() ||
-    !user.classname.trim() ||
-    !user.email.trim() ||
-    !user.team.trim() ||
-    !user.sport.trim() ||
-    !user.password.trim()
-  ) {
+  if (!user.username.trim() || !user.password.trim() || !user.team.trim() || !user.sport) {
     alert("All fields are required.")
     return
   }
 
-  if (!user.email.includes("@")) {
-    alert("Invalid email")
+  const passwordError = validatePassword(user.password)
+  if (passwordError) {
+    alert(passwordError)
     return
   }
 
   loading.value = true
 
   try {
-    // 1. Check if the team already exists
-    let teamId
-    const teamsRes = await axios.get("/api/teams")
-    const existingTeam = teamsRes.data.find(t => t.Name === user.team)
-
-    if (existingTeam) {
-      teamId = existingTeam.idTeams
-    } else {
-      const createTeamRes = await axios.post("/api/teams", { Name: user.team })
-      teamId = createTeamRes.data.idTeams
-    }
-
-    // 2. Create the player
-    const playerRes = await axios.post("/api/players", {
-      Firstname: user.firstname,
-      Lastname: user.lastname,
-      Email: user.email,
-      Classname: user.classname,
-      Teams_id: teamId
-    })
-
-    const playerId = playerRes.data.id
-
-    // 3. Create the user linked to the player
-    const username = user.email
-    await axios.post("/api/users", {
-      username,
+    await axios.post("http://localhost:3006/api/auth/register", {
+      username: user.username,
       password: user.password,
-      role: "leader",
-      players_id: playerId
+      teamName: user.team,
+      sportId: user.sport
     })
 
     registered.value = true
@@ -81,10 +84,9 @@ const registerUser = async () => {
 
     // Reset form
     Object.keys(user).forEach(key => user[key] = "")
-
   } catch (e) {
     console.error(e)
-    alert("Error during registration.")
+    alert(e.response?.data?.message || "Error during registration.")
   } finally {
     loading.value = false
   }
@@ -99,23 +101,8 @@ const registerUser = async () => {
       <p class="subtitle">Create your team and start registering</p>
 
       <div class="form-group">
-        <label>Last Name</label>
-        <input v-model="user.lastname" placeholder="Your last name" />
-      </div>
-
-      <div class="form-group">
-        <label>First Name</label>
-        <input v-model="user.firstname" placeholder="Your first name" />
-      </div>
-
-      <div class="form-group">
-        <label>Class</label>
-        <input v-model="user.classname" placeholder="Ex: 3A" />
-      </div>
-
-      <div class="form-group">
-        <label>Email</label>
-        <input v-model="user.email" placeholder="your.email@example.com" />
+        <label>Username</label>
+        <input v-model="user.username" placeholder="Enter your username" />
       </div>
 
       <div class="form-group">
@@ -132,17 +119,13 @@ const registerUser = async () => {
         <label>Sport Choice</label>
         <select v-model="user.sport">
           <option disabled value="">Select a sport</option>
-          <option v-for="s in sports" :key="s" :value="s">
-            {{ s }}
+          <option v-for="s in sports" :key="s.idSports" :value="s.idSports">
+            {{ s.Name }}
           </option>
         </select>
       </div>
 
-      <button
-        class="register-btn"
-        @click="registerUser"
-        :disabled="loading"
-      >
+      <button class="register-btn" @click="registerUser" :disabled="loading">
         {{ loading ? "Loading..." : "Create Account" }}
       </button>
 
@@ -155,7 +138,6 @@ const registerUser = async () => {
 </template>
 
 <style scoped>
-/* Keep the original styling */
 .register-container {
   position: fixed;
   inset: 0;

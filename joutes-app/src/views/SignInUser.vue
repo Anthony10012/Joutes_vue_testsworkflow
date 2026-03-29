@@ -91,6 +91,10 @@ const registerUser = async () => {
     registered.value = true
     alert(`Votre compte a été créé avec succès ! Bienvenue dans l'équipe ${user.team}.`)
 
+    //Redirection vers la page login
+    setTimeout(() => {
+      router.push('/login')
+    }, 2000)
 
     // Reset form
     Object.keys(user).forEach((key) => (user[key] = ''))

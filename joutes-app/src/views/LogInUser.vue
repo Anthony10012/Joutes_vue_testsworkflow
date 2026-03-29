@@ -6,11 +6,11 @@
       <p class="subtitle">Connectez-vous pour continuer</p>
 
       <div class="form-group">
-        <label>Email</label>
+        <label>Username</label>
         <input
-          type="email"
-          placeholder="votre.email@ecnv.ch"
-          v-model="email"
+          type="text"
+          placeholder="username"
+          v-model="username"
         />
       </div>
 
@@ -23,8 +23,8 @@
         />
       </div>
 
-      <button class="login-btn" @click="login">
-        Se connecter
+      <button class="login-btn" @click="login" :disabled="loading">
+        {{ loading ? "Connexion..." : "Se connecter" }}
       </button>
 
     </div>
@@ -33,21 +33,49 @@
 
 <script setup>
 import { ref } from "vue"
+import axios from "axios"
 
-const email = ref("")
+const username = ref("")
 const password = ref("")
+const loading = ref(false)
 
-const login = () => {
-  console.log(email.value, password.value)
+const login = async () => {
+  if (!username.value || !password.value) {
+    alert("Tous les champs sont obligatoires")
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const res = await axios.post("http://localhost:3006/api/auth/login", {
+      username: username.value,
+      password: password.value
+    })
+
+    console.log("Réponse backend:", res.data)
+
+    // Stocker le token JWT
+    localStorage.setItem("token", res.data.token)
+
+    alert(`Connexion réussie ! Bienvenue ${res.data.user.username}`)
+
+    // Optionnel : redirection vers une autre page après login
+    // window.location.href = "/dashboard"
+
+  } catch (e) {
+    console.error(e)
+    alert(e.response?.data?.message || "Erreur de connexion")
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <style scoped>
-
 .login-container {
   position: fixed;
   inset: 0;
-
   display: flex;
   justify-content: center;
   align-items: center;
@@ -60,7 +88,6 @@ const login = () => {
   background: white;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
-
 
 h1 {
   font-size: 28px;
@@ -110,13 +137,8 @@ input:focus {
   background: #1e4fd1;
 }
 
-.demo-box {
-  margin-top: 25px;
-  background: #f1f5f9;
-  padding: 15px;
-  border-radius: 8px;
-  font-size: 14px;
-  text-align: left;
+.login-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
 }
-
 </style>

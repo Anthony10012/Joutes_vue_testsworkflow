@@ -54,14 +54,14 @@ router.post('/login', async (req, res) => {
         const [users] = await pool.execute('SELECT * FROM Users WHERE Username = ?', [username]);
 
         if (users.length === 0) {
-            return res.status(401).json({ message: "Utilisateur inconnu" });
+            return res.status(401).json({ message: "username ou mot de passe incorrect" });
         }
 
         const user = users[0];
         const isMatch = await bcrypt.compare(password, user.Password);
 
         if (!isMatch) {
-            return res.status(401).json({ message: "Mot de passe incorrect" });
+            return res.status(401).json({ message: "Username ou mot de passe incorrect" });
         }
 
         const token = jwt.sign(

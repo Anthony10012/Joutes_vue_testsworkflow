@@ -1,16 +1,14 @@
-name: CI - Code Quality
+name: CI - Frontend Quality
 on: [push]
 
 jobs:
-  lint:
+  lint-frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend
-
+        working-directory: ./joutes-app # On va dans le dossier Vue
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'

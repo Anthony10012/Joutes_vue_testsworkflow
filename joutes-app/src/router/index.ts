@@ -7,7 +7,7 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/teams',
+      path: '/',
       name: 'PlayerTeamView',
       component: PlayerTeamView,
     },
@@ -20,7 +20,7 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
     {
-      path: '/',
+      path: '/sign_in',
       name: 'home',
       component: SignInUser,
     },
